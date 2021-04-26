@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
+import com.oracle.graal.pointsto.HackConfig;
 import org.graalvm.compiler.debug.DebugContext;
 import org.graalvm.compiler.debug.DebugContext.Activation;
 import org.graalvm.compiler.debug.DebugContext.Builder;
@@ -161,7 +162,7 @@ public final class CompletionExecutor {
                     }
                     completedOperations.increment();
                 } else {
-                    if (firstTime) {
+                    if (HackConfig.traceParseBytecodeMethod && firstTime) {
                         new RuntimeException().printStackTrace();
                         firstTime = false;
                     }

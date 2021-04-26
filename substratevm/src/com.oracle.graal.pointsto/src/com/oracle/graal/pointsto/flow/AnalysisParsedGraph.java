@@ -24,6 +24,7 @@
  */
 package com.oracle.graal.pointsto.flow;
 
+import com.oracle.graal.pointsto.HackConfig;
 import org.graalvm.compiler.bytecode.Bytecode;
 import org.graalvm.compiler.bytecode.ResolvedJavaMethodBytecode;
 import org.graalvm.compiler.core.common.PermanentBailoutException;
@@ -71,7 +72,7 @@ public final class AnalysisParsedGraph {
             throw AnalysisError.shouldNotReachHere("BigBang object required for parsing method " + method.format("%H.%p(%n)"));
         }
 
-        if (firstTime) {
+        if (HackConfig.traceParseBytecodeMethod && firstTime) {
             new RuntimeException().printStackTrace();
             firstTime = false;
         }

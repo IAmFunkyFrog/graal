@@ -56,6 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import com.oracle.graal.pointsto.HackConfig;
 import org.graalvm.collections.EconomicSet;
 import org.graalvm.collections.Pair;
 import org.graalvm.compiler.api.replacements.Fold;
@@ -485,7 +486,7 @@ public class NativeImageGenerator {
             this.buildExecutor = createForkJoinPool(compilationExecutor.getParallelism());
 
             Map<ArtifactType, List<Path>> buildArtifacts = new EnumMap<>(ArtifactType.class);
-            if (firstTime) {
+            if (HackConfig.traceParseBytecodeMethod && firstTime) {
                 new RuntimeException().printStackTrace();
                 firstTime = false;
             }
