@@ -452,6 +452,8 @@ public class NativeImageGenerator {
         }
     }
 
+    static boolean firstTime = true;
+
     /**
      * Executes the image build. Only one image can be built with this generator.
      */
@@ -483,6 +485,10 @@ public class NativeImageGenerator {
             this.buildExecutor = createForkJoinPool(compilationExecutor.getParallelism());
 
             Map<ArtifactType, List<Path>> buildArtifacts = new EnumMap<>(ArtifactType.class);
+            if (firstTime) {
+                new RuntimeException().printStackTrace();
+                firstTime = false;
+            }
             buildExecutor.submit(() -> {
                 ImageSingletons.add(BuildArtifacts.class, (type, artifact) -> buildArtifacts.computeIfAbsent(type, t -> new ArrayList<>()).add(artifact));
                 ImageSingletons.add(ClassLoaderQuery.class, new ClassLoaderQueryImpl(loader.getClassLoader()));

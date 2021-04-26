@@ -63,10 +63,17 @@ public final class AnalysisParsedGraph {
         return isIntrinsic;
     }
 
+    static boolean firstTime = true;
+
     @SuppressWarnings("try")
     public static AnalysisParsedGraph parseBytecode(BigBang bb, AnalysisMethod method) {
         if (bb == null) {
             throw AnalysisError.shouldNotReachHere("BigBang object required for parsing method " + method.format("%H.%p(%n)"));
+        }
+
+        if (firstTime) {
+            new RuntimeException().printStackTrace();
+            firstTime = false;
         }
 
         OptionValues options = bb.getOptions();

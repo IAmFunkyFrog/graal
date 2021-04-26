@@ -132,6 +132,8 @@ public final class CompletionExecutor {
         }
     }
 
+    static boolean firstTime = true;
+
     @SuppressWarnings("try")
     public void execute(DebugContextRunnable command) {
         if (!exceptions.isEmpty()) {
@@ -159,6 +161,10 @@ public final class CompletionExecutor {
                     }
                     completedOperations.increment();
                 } else {
+                    if (firstTime) {
+                        new RuntimeException().printStackTrace();
+                        firstTime = false;
+                    }
                     executorService.execute(() -> {
                         bb.getHostVM().installInThread(vmConfig);
                         long startTime = 0L;
