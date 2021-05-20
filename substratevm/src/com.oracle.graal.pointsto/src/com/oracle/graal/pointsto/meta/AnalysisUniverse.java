@@ -24,6 +24,7 @@
  */
 package com.oracle.graal.pointsto.meta;
 
+import java.io.PrintWriter;
 import java.lang.reflect.AnnotatedElement;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -121,6 +122,8 @@ public class AnalysisUniverse implements Universe {
     private final Platform platform;
     private AnalysisPolicy analysisPolicy;
 
+    private final PrintWriter logFile;
+
     public JavaKind getWordKind() {
         return wordKind;
     }
@@ -128,7 +131,8 @@ public class AnalysisUniverse implements Universe {
     @SuppressWarnings("unchecked")
     public AnalysisUniverse(HostVM hostVM, JavaKind wordKind, Platform platform, AnalysisPolicy analysisPolicy, SubstitutionProcessor substitutions, MetaAccessProvider originalMetaAccess,
                     SnippetReflectionProvider originalSnippetReflection,
-                    SnippetReflectionProvider snippetReflection) {
+                    SnippetReflectionProvider snippetReflection,
+                    PrintWriter logFile) {
         this.hostVM = hostVM;
         this.wordKind = wordKind;
         this.platform = platform;
@@ -137,6 +141,7 @@ public class AnalysisUniverse implements Universe {
         this.originalMetaAccess = originalMetaAccess;
         this.originalSnippetReflection = originalSnippetReflection;
         this.snippetReflection = snippetReflection;
+        this.logFile = logFile;
 
         sealed = false;
         objectReplacers = (Function<Object, Object>[]) new Function<?, ?>[0];
@@ -215,6 +220,7 @@ public class AnalysisUniverse implements Universe {
 
     @SuppressFBWarnings(value = {"ES_COMPARING_STRINGS_WITH_EQ"}, justification = "Bug in findbugs")
     private AnalysisType createType(ResolvedJavaType type) {
+        logFile.println(type.toJavaName());
         if (!platformSupported(type)) {
             throw new UnsupportedFeatureException("type is not available in this platform: " + type.toJavaName(true));
         }
