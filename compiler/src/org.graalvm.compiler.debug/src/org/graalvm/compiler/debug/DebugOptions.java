@@ -176,6 +176,13 @@ public class DebugOptions {
 
     @Option(help = "Enable dumping canonical text from for graphs.", type = OptionType.Debug)
     public static final OptionKey<Boolean> PrintCanonicalGraphStrings = new OptionKey<>(false);
+
+    @Option(help = "Dump graphs for static code coverage analysis", type = OptionType.Debug)
+    public static final OptionKey<Boolean> DumpGraphsForCoverage = new OptionKey<>(true);
+
+    @Option(help = "Dump graphs for static code coverage analysis", type = OptionType.Debug)
+    public static final OptionKey<Boolean> CheckRepeatedNodes = new OptionKey<>(false);
+
     @Option(help = "Choose format used when dumping canonical text for graphs: " +
             "0 gives a scheduled graph (better for spotting changes involving the schedule) " +
             "while 1 gives a CFG containing expressions rooted at fixed nodes (better for spotting small structure differences)", type = OptionType.Debug)

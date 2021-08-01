@@ -28,7 +28,8 @@ import static org.graalvm.compiler.hotspot.JVMCIVersionCheck.JVMCI11_RELEASES_UR
 import static org.graalvm.compiler.hotspot.JVMCIVersionCheck.JVMCI8_RELEASES_URL;
 import static org.graalvm.compiler.replacements.StandardGraphBuilderPlugins.registerInvocationPlugins;
 
-import java.io.File;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.ref.Reference;
@@ -50,6 +51,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
@@ -65,6 +67,7 @@ import org.graalvm.compiler.api.replacements.Fold;
 import org.graalvm.compiler.api.replacements.SnippetReflectionProvider;
 import org.graalvm.compiler.bytecode.BytecodeProvider;
 import org.graalvm.compiler.bytecode.ResolvedJavaMethodBytecodeProvider;
+import org.graalvm.compiler.code.CompilationResult;
 import org.graalvm.compiler.core.common.GraalOptions;
 import org.graalvm.compiler.core.common.spi.ForeignCallsProvider;
 import org.graalvm.compiler.debug.DebugCloseable;
@@ -72,7 +75,9 @@ import org.graalvm.compiler.debug.DebugContext;
 import org.graalvm.compiler.debug.DebugContext.Builder;
 import org.graalvm.compiler.debug.DebugDumpScope;
 import org.graalvm.compiler.debug.DebugHandlersFactory;
+import org.graalvm.compiler.debug.DebugOptions;
 import org.graalvm.compiler.debug.Indent;
+import org.graalvm.compiler.debug.PathUtilities;
 import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.hotspot.GraalHotSpotVMConfig;
 import org.graalvm.compiler.hotspot.HotSpotGraalCompiler;
@@ -660,6 +665,35 @@ public class NativeImageGenerator {
                                 compilationExecutor);
                 compileQueue.finish(debug);
 
+                Map<HostedMethod, CompilationResult> compilations = compileQueue.getCompilations();
+
+                TreeMap<String, String> methodsMapping = new TreeMap<>();
+
+                for (Map.Entry<HostedMethod, CompilationResult> entry : compilations.entrySet()) {
+                    StructuredGraph g = entry.getKey().compilationInfo.getGraph();
+                    if (g != null) {
+                        g.getDebug().forceDump(g, entry.getKey().wrapped.getQualifiedName());
+                        methodsMapping.put(entry.getKey().getQualifiedName(), g.getDebug().currentMethodDumpPath);
+                    }
+                }
+
+
+                try {
+                    Path outDirectory = DebugOptions.getDumpDirectory(debug.getOptions());
+                    String title = "methods.txt";
+                    Path filePath = outDirectory.resolve(PathUtilities.sanitizeFileName(title));
+                    try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(filePath.toFile())))) {
+                        for (Map.Entry<String, String> entry : methodsMapping.entrySet()) {
+                            writer.print(entry.getKey());
+                            writer.print(" -> ");
+                            writer.print(entry.getValue());
+                            writer.println();
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 /* release memory taken by graphs for the image writing */
                 hUniverse.getMethods().forEach(HostedMethod::clear);
 
@@ -952,17 +986,8 @@ public class NativeImageGenerator {
         automaticSubstitutions.init(loader, originalMetaAccess);
         AnalysisPolicy analysisPolicy = PointstoOptions.AllocationSiteSensitiveHeap.getValue(options) ? new BytecodeSensitiveAnalysisPolicy(options)
                         : new DefaultAnalysisPolicy(options);
-        try {
-            File file = new File(SubstrateOptions.AnalysisLogFile.getValue());
-            file.createNewFile();
-            PrintWriter logFile = new PrintWriter(file);
-            return new AnalysisUniverse(hostVM, target.wordJavaKind, loader.platform, analysisPolicy, aSubstitutions, originalMetaAccess, originalSnippetReflection,
-                    new SubstrateSnippetReflectionProvider(new SubstrateWordTypes(originalMetaAccess, FrameAccess.getWordKind())), logFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-        return null;
+        return new AnalysisUniverse(hostVM, target.wordJavaKind, loader.platform, analysisPolicy, aSubstitutions, originalMetaAccess, originalSnippetReflection,
+                new SubstrateSnippetReflectionProvider(new SubstrateWordTypes(originalMetaAccess, FrameAccess.getWordKind())));
     }
 
     public static AnnotationSubstitutionProcessor createDeclarativeSubstitutionProcessor(MetaAccessProvider originalMetaAccess, ImageClassLoader loader,

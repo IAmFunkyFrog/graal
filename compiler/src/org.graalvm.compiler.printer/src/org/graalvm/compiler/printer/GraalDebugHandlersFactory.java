@@ -59,12 +59,16 @@ public class GraalDebugHandlersFactory implements DebugHandlersFactory {
     @Override
     public List<DebugHandler> createHandlers(OptionValues options) {
         List<DebugHandler> handlers = new ArrayList<>();
-        handlers.add(new GraphPrinterDumpHandler((debug, graph) -> new BinaryGraphPrinter(debug, snippetReflection)));
+        if (!DebugOptions.DumpGraphsForCoverage.getValue(options)) {
+            handlers.add(new GraphPrinterDumpHandler((debug, graph) -> new BinaryGraphPrinter(debug, snippetReflection)));
+        }
         if (DebugOptions.PrintCanonicalGraphStrings.getValue(options)) {
             handlers.add(new GraphPrinterDumpHandler((debug, graph) -> createStringPrinter(snippetReflection)));
         }
         handlers.add(new NodeDumper());
-        handlers.add(new CFGPrinterObserver());
+        if (!DebugOptions.DumpGraphsForCoverage.getValue(options)) {
+            handlers.add(new CFGPrinterObserver());
+        }
         handlers.add(new NoDeadCodeVerifyHandler());
         if (DebugOptions.PrintBlockMapping.getValue(options)) {
             handlers.add(new BciBlockMappingDumpHandler());

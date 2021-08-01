@@ -125,6 +125,8 @@ public final class DebugContext implements AutoCloseable {
      */
     private long[] metricValues;
 
+    public String currentMethodDumpPath;
+
     public static PrintStream getDefaultLogStream() {
         return TTY.out;
     }

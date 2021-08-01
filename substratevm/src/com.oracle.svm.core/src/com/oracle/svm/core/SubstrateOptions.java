@@ -149,9 +149,6 @@ public class SubstrateOptions {
     @Option(help = "Search path for C libraries passed to the linker (list of comma-separated directories)")//
     public static final HostedOptionKey<LocatableMultiOptionValue.Strings> CLibraryPath = new HostedOptionKey<>(new LocatableMultiOptionValue.Strings());
 
-    @Option(help = "Path to log file")//
-    public static final HostedOptionKey<String> AnalysisLogFile = new HostedOptionKey<>("");
-
     @Option(help = "Path passed to the linker as the -rpath (list of comma-separated directories)")//
     public static final HostedOptionKey<LocatableMultiOptionValue.Strings> LinkerRPath = new HostedOptionKey<>(new LocatableMultiOptionValue.Strings());
 

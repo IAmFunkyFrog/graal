@@ -301,7 +301,7 @@ public abstract class Node implements Cloneable, Formattable, NodeInterface {
         }
     }
 
-    final int id() {
+    public final int id() {
         return id;
     }
 
