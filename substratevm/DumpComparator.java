@@ -24,9 +24,6 @@ public class DumpComparator {
             try (Scanner scanner = new Scanner(new File(dir, MAPPING_FILE))) {
                 while (scanner.hasNext()) {
                     String line = scanner.nextLine();
-                    if (line.startsWith("com.oracle.svm")) {
-                        continue;
-                    }
                     String[] parts = line.split(" -> ");
                     mapping.put(parts[0], parts[1]);
                 }
