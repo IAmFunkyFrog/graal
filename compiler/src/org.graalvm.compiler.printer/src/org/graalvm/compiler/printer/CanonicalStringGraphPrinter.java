@@ -71,7 +71,7 @@ import org.graalvm.compiler.options.OptionValues;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 
 public class CanonicalStringGraphPrinter implements GraphPrinter {
-    private static final Pattern IDENTITY_PATTERN = Pattern.compile("([A-Za-z0-9$_]+)@[0-9a-f]+");
+    private static final Pattern IDENTITY_PATTERN = Pattern.compile("([A-Za-z0-9$_;]+)@[0-9a-f]+");
     private final SnippetReflectionProvider snippetReflection;
 
     public CanonicalStringGraphPrinter(SnippetReflectionProvider snippetReflection) {
@@ -87,6 +87,93 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
         return IDENTITY_PATTERN.matcher(str).replaceAll("$1");
     }
 
+    private static String objToString(Object o) {
+        if (o == null) return "null";
+        if (o instanceof boolean[]) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{{");
+            for (boolean i : (boolean[]) o) {
+                sb.append(i);
+                sb.append(", ");
+            }
+            sb.append("}}");
+            return sb.toString();
+        } else if (o instanceof char[]) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{{");
+            for (char i : (char[]) o) {
+                sb.append(i);
+                sb.append(", ");
+            }
+            sb.append("}}");
+            return sb.toString();
+        } else if (o instanceof byte[]) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{{");
+            for (byte i : (byte[]) o) {
+                sb.append(i);
+                sb.append(", ");
+            }
+            sb.append("}}");
+            return sb.toString();
+        } else if (o instanceof short[]) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{{");
+            for (short i : (short[]) o) {
+                sb.append(i);
+                sb.append(", ");
+            }
+            sb.append("}}");
+            return sb.toString();
+        } else if (o instanceof int[]) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{{");
+            for (int i : (int[]) o) {
+                sb.append(i);
+                sb.append(", ");
+            }
+            sb.append("}}");
+            return sb.toString();
+        } else if (o instanceof long[]) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{{");
+            for (long i : (long[]) o) {
+                sb.append(i);
+                sb.append(", ");
+            }
+            sb.append("}}");
+            return sb.toString();
+        } else if (o instanceof float[]) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{{");
+            for (float i : (float[]) o) {
+                sb.append(i);
+                sb.append(", ");
+            }
+            sb.append("}}");
+            return sb.toString();
+        } else if (o instanceof double[]) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{{");
+            for (double i : (double[]) o) {
+                sb.append(i);
+                sb.append(", ");
+            }
+            sb.append("}}");
+            return sb.toString();
+        } else if (o instanceof Object[]) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{{");
+            for (Object i : (Object[]) o) {
+                sb.append(objToString(i));
+                sb.append(", ");
+            }
+            sb.append("}}");
+            return sb.toString();
+        }
+        return String.valueOf(o);
+    }
+
     protected static void writeCanonicalGraphExpressionString(Set<Integer> nodeIds, ValueNode node, boolean checkConstants, boolean removeIdentities, PrintWriter writer) {
         int id = node.id();
         OptionValues options = node.graph().getOptions();
@@ -99,15 +186,17 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
         writer.print("(");
         Fields properties = node.getNodeClass().getData();
         for (int i = 0; i < properties.getCount(); i++) {
-            String dataStr = String.valueOf(properties.get(node, i));
+            String dataStr = objToString(properties.get(node, i));
             if (removeIdentities) {
                 dataStr = removeIdentities(dataStr);
             }
+            writer.print("{" + properties.getName(i) + "}: ");
             writer.print(dataStr);
             if (i + 1 < properties.getCount() || node.inputPositions().iterator().hasNext()) {
                 writer.print(", ");
             }
         }
+        writer.print("{input positions}: ");
         Iterator<Position> iterator = node.inputPositions().iterator();
         while (iterator.hasNext()) {
             Position position = iterator.next();
