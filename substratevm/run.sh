@@ -1,7 +1,7 @@
 #!/bin/bash
 
-RTJAR_1_PATH=$JAVA_HOME
-RTJAR_2_PATH=$JAVA_HOME
+RTJAR_1_PATH="$JAVA_HOME/jre/lib/rt.jar"
+RTJAR_2_PATH="$JAVA_HOME/jre/lib/rt.jar"
 REMOVE_IDENTITIES=false
 TEST_CLASS=$1
 DUMP_DIR="$2_"
