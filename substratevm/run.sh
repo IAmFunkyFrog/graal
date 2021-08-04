@@ -1,7 +1,8 @@
 #!/bin/bash
 
-RTJAR_1_PATH="/home/vasyoid/openjdk-8u292b10/openjdk-8u292-b10/jre/lib/rt.jar"
-RTJAR_2_PATH="/home/vasyoid/openjdk-8u292b10/openjdk-8u292-b10/jre/lib/rt.jar"
+RTJAR_1_PATH=$JAVA_HOME
+RTJAR_2_PATH=$JAVA_HOME
+REMOVE_IDENTITIES=false
 TEST_CLASS=$1
 DUMP_DIR="$2_"
 
@@ -56,10 +57,15 @@ run_on_jar () {
 	-H:+DumpGraphsForCoverage \
 	-H:PrintCanonicalGraphStringFlavor=3 \
 	-H:+CanonicalGraphStringsCheckConstants \
-	-H:DumpPath="graal_dumps/$DUMP_DIR/$2"
+	$( [[ $REMOVE_IDENTITIES == false ]] && printf %s "-H:-CanonicalGraphStringsRemoveIdentities" ) \
+	-H:DumpPath="$DUMP_DIR/$2"
 
 	mv "$JAVA_HOME/jre/lib/rt.jar-backup" "$JAVA_HOME/jre/lib/rt.jar"	
 }
 
 run_on_jar $RTJAR_1_PATH 1 no_debug
 run_on_jar $RTJAR_2_PATH 2 no_debug
+
+java DumpComparator "$DUMP_DIR/1" "$DUMP_DIR/2" "$DUMP_DIR/diff-full.txt" full
+java DumpComparator "$DUMP_DIR/1" "$DUMP_DIR/2" "$DUMP_DIR/diff-medium.txt" medium
+java DumpComparator "$DUMP_DIR/1" "$DUMP_DIR/2" "$DUMP_DIR/diff-small.txt" small
