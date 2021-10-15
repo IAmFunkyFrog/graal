@@ -1,0 +1,16 @@
+#!/bin/bash
+
+//Путь, по которому скопирован репозиторий грааля
+GRAAL_PATH="/home/stepan-trefilov/IdeaProjects/graal"
+//Путь, по которому содержится собранный с помощью mxbuild jdk
+GRAAL_BUILDED_JDK="/home/stepan-trefilov/IdeaProjects/graal/sdk/mxbuild/linux-amd64/GRAALVM_CE0C781D19_JAVA8/graalvm-ce0c781d19-java8-21.2.0-dev"
+
+//Путь, по которому находится первый jdk, который надо сравнить
+RTJAR_1_PATH="/home/stepan-trefilov/openjdk1.8.0_302-jvmci-20.3-b22/jre/lib/rt.jar"
+//Путь, по которому находится второй jdk, который надо сравнить
+RTJAR_2_PATH="/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/lib/rt.jar"
+//Папка, в которую будут сохранены дампы
+DUMP_DIR="graal_dumps/compare"
+
+//Тестовый класс (должен иметь точку входа main)
+TEST_CLASS="HelloWorld"
