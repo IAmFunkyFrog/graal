@@ -672,7 +672,7 @@ public class NativeImageGenerator {
                 for (Map.Entry<HostedMethod, CompilationResult> entry : compilations.entrySet()) {
                     StructuredGraph g = entry.getKey().compilationInfo.getGraph();
                     if (g != null) {
-                        g.getDebug().forceDump(g, entry.getKey().wrapped.getQualifiedName());
+                        g.getDebug().forceDump(g, entry.getKey().wrapped.getQualifiedName(), hMetaAccess.getWrapped());
                         methodsMapping.put(entry.getKey().getQualifiedName(), g.getDebug().currentMethodDumpPath);
                     }
                 }

@@ -37,6 +37,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,8 +46,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import jdk.vm.ci.meta.JavaField;
+import jdk.vm.ci.meta.JavaMethod;
+import jdk.vm.ci.meta.JavaType;
+import jdk.vm.ci.meta.MetaAccessProvider;
 import org.graalvm.compiler.api.replacements.SnippetReflectionProvider;
 import org.graalvm.compiler.core.common.Fields;
+import org.graalvm.compiler.core.common.type.Stamp;
 import org.graalvm.compiler.debug.DebugContext;
 import org.graalvm.compiler.debug.PathUtilities;
 import org.graalvm.compiler.graph.Graph;
@@ -87,90 +93,27 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
         return IDENTITY_PATTERN.matcher(str).replaceAll("$1");
     }
 
+    private static MetaAccessProvider metaAccessProvider = null;
+
     private static String objToString(Object o) {
-        if (o == null) return "null";
-        if (o instanceof boolean[]) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{{");
-            for (boolean i : (boolean[]) o) {
-                sb.append(i);
-                sb.append(", ");
+        //array types serialization
+        if(o.getClass().isArray()) {
+            StringBuilder builder = new StringBuilder("");
+            builder.append("[");
+            boolean first = true;
+            for(Object i : (Object[])o) {
+                if(first) first = false;
+                else builder.append(", ");
+                builder.append(objToString(i));
             }
-            sb.append("}}");
-            return sb.toString();
-        } else if (o instanceof char[]) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{{");
-            for (char i : (char[]) o) {
-                sb.append(i);
-                sb.append(", ");
-            }
-            sb.append("}}");
-            return sb.toString();
-        } else if (o instanceof byte[]) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{{");
-            for (byte i : (byte[]) o) {
-                sb.append(i);
-                sb.append(", ");
-            }
-            sb.append("}}");
-            return sb.toString();
-        } else if (o instanceof short[]) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{{");
-            for (short i : (short[]) o) {
-                sb.append(i);
-                sb.append(", ");
-            }
-            sb.append("}}");
-            return sb.toString();
-        } else if (o instanceof int[]) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{{");
-            for (int i : (int[]) o) {
-                sb.append(i);
-                sb.append(", ");
-            }
-            sb.append("}}");
-            return sb.toString();
-        } else if (o instanceof long[]) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{{");
-            for (long i : (long[]) o) {
-                sb.append(i);
-                sb.append(", ");
-            }
-            sb.append("}}");
-            return sb.toString();
-        } else if (o instanceof float[]) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{{");
-            for (float i : (float[]) o) {
-                sb.append(i);
-                sb.append(", ");
-            }
-            sb.append("}}");
-            return sb.toString();
-        } else if (o instanceof double[]) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{{");
-            for (double i : (double[]) o) {
-                sb.append(i);
-                sb.append(", ");
-            }
-            sb.append("}}");
-            return sb.toString();
-        } else if (o instanceof Object[]) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{{");
-            for (Object i : (Object[]) o) {
-                sb.append(objToString(i));
-                sb.append(", ");
-            }
-            sb.append("}}");
-            return sb.toString();
+            builder.append("]");
+            return builder.toString();
         }
+        //other types serialization
+        if(o instanceof Stamp && metaAccessProvider != null) return objToString(((Stamp) o).javaType(metaAccessProvider));
+        else if(o instanceof JavaType) return ((JavaType) o).toJavaName();
+        else if(o instanceof JavaMethod) return ((JavaMethod) o).format("%H.%n(%P):%R");
+        else if(o instanceof JavaField) return ((JavaField) o).format("%H.%n:%T");
         return String.valueOf(o);
     }
 
@@ -186,18 +129,19 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
         writer.print("(");
         Fields properties = node.getNodeClass().getData();
         for (int i = 0; i < properties.getCount(); i++) {
+            String name = properties.getName(i);
             String dataStr = objToString(properties.get(node, i));
             if (removeIdentities) {
                 dataStr = removeIdentities(dataStr);
             }
-            writer.print("{" + properties.getName(i) + "}: ");
+            writer.print("{" + name + "}: ");
             writer.print(dataStr);
             if (i + 1 < properties.getCount() || node.inputPositions().iterator().hasNext()) {
                 writer.print(", ");
             }
         }
-        writer.print("{input positions}: ");
         Iterator<Position> iterator = node.inputPositions().iterator();
+        if(iterator.hasNext()) writer.print("{input positions}: ");
         while (iterator.hasNext()) {
             Position position = iterator.next();
             Node input = position.get(node);
@@ -207,13 +151,13 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
                 if (removeIdentities) {
                     valueString = removeIdentities(valueString);
                 }
-                writer.print(valueString);
+                writer.print("Constant(" + valueString + ")");
             } else if (input instanceof ValueNode && !(input instanceof PhiNode) && !(input instanceof FixedNode)) {
                 writeCanonicalGraphExpressionString(nodeIds, (ValueNode) input, checkConstants, removeIdentities, writer);
             } else if (input == null) {
                 writer.print("null");
             } else {
-                writer.print(input.getClass().getSimpleName());
+                writer.print(input.getClass().getSimpleName() + "<" + input.id() + ">");
             }
             if (iterator.hasNext()) {
                 writer.print(", ");
@@ -432,30 +376,15 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
             StructuredGraph structuredGraph = (StructuredGraph) graph;
             Path outDirectory = getDirectory(debug, structuredGraph);
             if (PrintCanonicalGraphStringFlavor.getValue(options) == 3) {
+                if(args.length > 0 && args[0] instanceof MetaAccessProvider) metaAccessProvider = (MetaAccessProvider) args[0];
                 debug.currentMethodDumpPath = outDirectory.getFileName().toString();
                 if (CheckRepeatedNodes.getValue(options)) {
                     System.err.println(debug.currentMethodDumpPath);
                 }
-                {
-                    String title = "small.txt";
-                    Path filePath = outDirectory.resolve(PathUtilities.sanitizeFileName(title));
-                    try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(filePath.toFile())))) {
-                        writeCanonicalGraphString(structuredGraph, CanonicalGraphStringsCheckConstants.getValue(options), CanonicalGraphStringsRemoveIdentities.getValue(options), writer);
-                    }
-                }
-                {
-                    String title = "medium.txt";
-                    Path filePath = outDirectory.resolve(PathUtilities.sanitizeFileName(title));
-                    try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(filePath.toFile())))) {
-                        writeCanonicalExpressionCFGString(structuredGraph, CanonicalGraphStringsCheckConstants.getValue(options), CanonicalGraphStringsRemoveIdentities.getValue(options), writer);
-                    }
-                }
-                {
-                    String title = "full.txt";
-                    Path filePath = outDirectory.resolve(PathUtilities.sanitizeFileName(title));
-                    try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(filePath.toFile())))) {
-                        writeFullCFGString(structuredGraph, CanonicalGraphStringsCheckConstants.getValue(options), CanonicalGraphStringsRemoveIdentities.getValue(options), writer);
-                    }
+                String title = "medium.txt";
+                Path filePath = outDirectory.resolve(PathUtilities.sanitizeFileName(title));
+                try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(filePath.toFile())))) {
+                    writeCanonicalExpressionCFGString(structuredGraph, CanonicalGraphStringsCheckConstants.getValue(options), CanonicalGraphStringsRemoveIdentities.getValue(options), writer);
                 }
                 return;
             }

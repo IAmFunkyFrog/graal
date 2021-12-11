@@ -2,7 +2,8 @@
 
 source ./config
 
-REMOVE_IDENTITIES=false
+REMOVE_IDENTITIES=true
+CHECK_CONSTANTS=false
 
 TEST_CLASS_LOWER_CASE=$(echo "$TEST_CLASS" | tr '[:upper:]' '[:lower:]')
 
@@ -11,23 +12,11 @@ run_on_jar () {
 	cp "$1" "$GRAAL_BUILDED_JDK/jre/lib/"
 
 	$GRAAL_BUILDED_JDK/jre/bin/java \
-	$( [[ $3 == debug ]] && printf %s '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8000' ) \
 	-XX:+UseParallelGC \
 	-XX:+UnlockExperimentalVMOptions \
 	-XX:+EnableJVMCI \
-	-Dtruffle.TrustAllTruffleRuntimeProviders=true \
-	-Dtruffle.TruffleRuntime=com.oracle.truffle.api.impl.DefaultTruffleRuntime \
-	-Dgraalvm.ForcePolyglotInvalid=true \
-	-Dgraalvm.locatorDisabled=true \
-	-d64 \
 	-XX:-UseJVMCIClassLoader \
 	-XX:-UseJVMCICompiler \
-	-Xss10m \
-	-Xms1g \
-	-Xmx13278383304 \
-	-Duser.country=US \
-	-Duser.language=en \
-	-Djava.awt.headless=true \
 	-Dorg.graalvm.version=dev \
 	-Dorg.graalvm.config=CE \
 	-Dcom.oracle.graalvm.isaot=true \
@@ -54,16 +43,14 @@ run_on_jar () {
 	-H:+PrintCanonicalGraphStrings \
 	-H:+DumpGraphsForCoverage \
 	-H:PrintCanonicalGraphStringFlavor=3 \
-	-H:+CanonicalGraphStringsCheckConstants \
-	$( [[ $REMOVE_IDENTITIES == false ]] && printf %s "-H:-CanonicalGraphStringsRemoveIdentities" ) \
+	$( [[ $REMOVE_IDENTITIES == true ]] && printf %s "-H:+CanonicalGraphStringsRemoveIdentities" ) \
+	$( [[ $CHECK_CONSTANTS == true ]] && printf %s "-H:+CanonicalGraphStringsCheckConstants" ) \
 	-H:DumpPath="$DUMP_DIR/$2" \
 
 	mv "$GRAAL_BUILDED_JDK/jre/lib/rt.jar-backup" "$GRAAL_BUILDED_JDK/jre/lib/rt.jar"
 }
 
-run_on_jar $RTJAR_1_PATH 1 no_debug
-run_on_jar $RTJAR_2_PATH 2 no_debug
+run_on_jar $RTJAR_1_PATH 1
+run_on_jar $RTJAR_2_PATH 2
 
-java DumpComparator "$DUMP_DIR/1" "$DUMP_DIR/2" "$DUMP_DIR/diff-full.txt" full
 java DumpComparator "$DUMP_DIR/1" "$DUMP_DIR/2" "$DUMP_DIR/diff-medium.txt" medium
-java DumpComparator "$DUMP_DIR/1" "$DUMP_DIR/2" "$DUMP_DIR/diff-small.txt" small
