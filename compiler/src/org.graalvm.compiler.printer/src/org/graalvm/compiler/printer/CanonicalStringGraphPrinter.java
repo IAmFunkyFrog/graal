@@ -53,6 +53,7 @@ import jdk.vm.ci.meta.MetaAccessProvider;
 import org.graalvm.compiler.api.replacements.SnippetReflectionProvider;
 import org.graalvm.compiler.core.common.Fields;
 import org.graalvm.compiler.core.common.type.Stamp;
+import org.graalvm.compiler.core.common.type.StampPair;
 import org.graalvm.compiler.debug.DebugContext;
 import org.graalvm.compiler.debug.PathUtilities;
 import org.graalvm.compiler.graph.Graph;
@@ -111,6 +112,7 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
         }
         //other types serialization
         if(o instanceof Stamp && metaAccessProvider != null) return objToString(((Stamp) o).javaType(metaAccessProvider));
+        else if(o instanceof StampPair && metaAccessProvider != null) return objToString(((StampPair) o).getTrustedStamp().javaType(metaAccessProvider));
         else if(o instanceof JavaType) return ((JavaType) o).toJavaName();
         else if(o instanceof JavaMethod) return ((JavaMethod) o).format("%H.%n(%P):%R");
         else if(o instanceof JavaField) return ((JavaField) o).format("%H.%n:%T");
