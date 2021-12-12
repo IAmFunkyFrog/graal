@@ -97,6 +97,7 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
     private static MetaAccessProvider metaAccessProvider = null;
 
     private static String objToString(Object o) {
+        if(o == null) return "null";
         //array types serialization
         if(o.getClass().isArray()) {
             StringBuilder builder = new StringBuilder("");
