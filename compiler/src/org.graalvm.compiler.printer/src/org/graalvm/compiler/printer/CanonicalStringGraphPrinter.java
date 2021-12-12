@@ -103,7 +103,47 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
             StringBuilder builder = new StringBuilder("");
             builder.append("[");
             boolean first = true;
-            for(Object i : (Object[])o) {
+            if(o instanceof int[]) for(int i : (int[])o) {
+                if(first) first = false;
+                else builder.append(", ");
+                builder.append(objToString(i));
+            }
+            else if(o instanceof byte[]) for(byte i : (byte[])o) {
+                if(first) first = false;
+                else builder.append(", ");
+                builder.append(objToString(i));
+            }
+            else if(o instanceof short[]) for(short i : (short[])o) {
+                if(first) first = false;
+                else builder.append(", ");
+                builder.append(objToString(i));
+            }
+            else if(o instanceof long[]) for(long i : (long[])o) {
+                if(first) first = false;
+                else builder.append(", ");
+                builder.append(objToString(i));
+            }
+            else if(o instanceof float[]) for(float i : (float[])o) {
+                if(first) first = false;
+                else builder.append(", ");
+                builder.append(objToString(i));
+            }
+            else if(o instanceof double[]) for(double i : (double[])o) {
+                if(first) first = false;
+                else builder.append(", ");
+                builder.append(objToString(i));
+            }
+            else if(o instanceof boolean[]) for(boolean i : (boolean[])o) {
+                if(first) first = false;
+                else builder.append(", ");
+                builder.append(objToString(i));
+            }
+            else if(o instanceof char[]) for(char i : (char[])o) {
+                if(first) first = false;
+                else builder.append(", ");
+                builder.append(objToString(i));
+            }
+            else for(Object i : (Object[])o) {
                 if(first) first = false;
                 else builder.append(", ");
                 builder.append(objToString(i));
