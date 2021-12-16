@@ -160,6 +160,15 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
         return String.valueOf(o);
     }
 
+    private static String[] ignoredNodeProperties = {
+            "hasSpeculationFence", // Uses: StartNode. Ignore reason: need for compilation
+            "polymorphic", // True if this invocation is almost certainly polymorphic, false when in doubt. Uses: InvokeWithExceptionNode. Ignore reason: expresses doubts, need for compilation
+            "inlineControl", // Uses: InvokeWithExceptionNode. Ignore reason: need for compilation
+            "profile", // Uses: SubstrateMethodCallTargetNode. Ignore reason: need for compilation
+            "staticAnalysisResults", // Uses: SubstrateMethodCallTargetNode. Ignore reason: contains method/arguments profile info => need for compilation
+
+    };
+
     protected static void writeCanonicalGraphExpressionString(Set<Integer> nodeIds, ValueNode node, boolean checkConstants, boolean removeIdentities, PrintWriter writer) {
         int id = node.id();
         OptionValues options = node.graph().getOptions();
@@ -173,6 +182,7 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
         Fields properties = node.getNodeClass().getData();
         for (int i = 0; i < properties.getCount(); i++) {
             String name = properties.getName(i);
+            if(Arrays.asList(ignoredNodeProperties).contains(name)) continue;
             String dataStr = objToString(properties.get(node, i));
             if (removeIdentities) {
                 dataStr = removeIdentities(dataStr);
