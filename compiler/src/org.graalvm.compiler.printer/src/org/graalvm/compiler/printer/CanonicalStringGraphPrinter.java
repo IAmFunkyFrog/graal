@@ -195,8 +195,21 @@ public class CanonicalStringGraphPrinter implements GraphPrinter {
                     valueString = removeIdentities(valueString);
                 }
                 writer.print("Constant(" + valueString + ")");
-            } else if (input instanceof ValueNode && !(input instanceof PhiNode) && !(input instanceof FixedNode)) {
-                writeCanonicalGraphExpressionString(nodeIds, (ValueNode) input, checkConstants, removeIdentities, writer);
+            } else if (input instanceof ValueNode && !(input instanceof FixedNode)) {
+                if(input instanceof PhiNode) {
+                    writer.print(input.getClass().getSimpleName());
+                    writer.print("<" + input.id() + ">");
+                    writer.print("({input positions}: ");
+                    boolean first = true;
+                    for (Node phiInput : input.inputs()) {
+                        if(first) first = false;
+                        else writer.print(", ");
+                        writer.print(phiInput.getClass().getSimpleName());
+                        writer.print("<" + phiInput.id() + ">");
+                    }
+                    writer.print(")");
+                }
+                else writeCanonicalGraphExpressionString(nodeIds, (ValueNode) input, checkConstants, removeIdentities, writer);
             } else if (input == null) {
                 writer.print("null");
             } else {
