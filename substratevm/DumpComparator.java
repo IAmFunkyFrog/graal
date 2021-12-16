@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -11,12 +12,14 @@ public class DumpComparator {
 
         private final File dir;
         private final HashMap<String, String> mapping;
+        private final ArrayList<String> diffentMethods;
         private final String graphFile;
 
         Dump(String dirPath, String graphFile) {
-            dir = new File (dirPath);
+            dir = new File(dirPath);
             this.graphFile = graphFile + ".txt";
             mapping = new HashMap<>();
+            diffentMethods = new ArrayList<>();
             initMapping();
         }
 
@@ -44,7 +47,7 @@ public class DumpComparator {
                     String myFile = myEntry.getValue() + "/" + graphFile;
                     String otherFile = other.mapping.get(myEntry.getKey()) + "/" + graphFile;
                     try (Scanner m1 = new Scanner(getChildFile(myFile));
-                         Scanner m2 = new Scanner(other.getChildFile(otherFile))) {
+                                    Scanner m2 = new Scanner(other.getChildFile(otherFile))) {
                         int line = 0;
                         while (m1.hasNext() || m2.hasNext()) {
                             String l1 = safeNextLine(m1);
@@ -54,6 +57,7 @@ public class DumpComparator {
                                 writer.println("line " + line + ":");
                                 writer.println(">>> " + l1);
                                 writer.println("<<< " + l2);
+                                diffentMethods.add(myEntry.getKey());
                                 break;
                             }
                             line++;
@@ -65,6 +69,32 @@ public class DumpComparator {
                         writer.println(otherEntry.getKey());
                         writer.println(">>> unused");
                         writer.println("<<< used");
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void printMethodsThatMayDiffer(String outputPath) {
+            try (PrintWriter writer = new PrintWriter(outputPath)) {
+                for (Map.Entry<String, String> myEntry : mapping.entrySet()) {
+                    String myFile = myEntry.getValue() + "/" + graphFile;
+                    try (Scanner m1 = new Scanner(getChildFile(myFile))) {
+                        int line = 0;
+                        while (m1.hasNext()) {
+                            String l1 = safeNextLine(m1);
+                            boolean breaked = false;
+                            for (String method: diffentMethods) {
+                                if (l1.contains(method)) {
+                                    writer.println(myEntry.getKey());
+                                    breaked = true;
+                                    break;
+                                }
+                            }
+                            if(breaked) break;
+                            line++;
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -85,8 +115,9 @@ public class DumpComparator {
     }
 
     public static void main(String[] args) {
-        Dump d1 = new Dump(args[0], args[3]);
-        Dump d2 = new Dump(args[1], args[3]);
+        Dump d1 = new Dump(args[0], args[4]);
+        Dump d2 = new Dump(args[1], args[4]);
         d1.compare(d2, args[2]);
+        d1.printMethodsThatMayDiffer(args[3]);
     }
 }

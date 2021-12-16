@@ -37,13 +37,13 @@ run_on_jar () {
 	-H:Path="$(pwd)" \
 	-H:CLibraryPath=$GRAAL_PATH/substratevm/mxbuild/linux-amd64/SVM_HOSTED_NATIVE/linux-amd64 \
 	-H:CLibraryPath=$GRAAL_BUILDED_JDK/jre/lib/svm/clibraries/linux-amd64 \
-	"-H:Class@explicit main-class=$TEST_CLASS" \
-	"-H:Name@main-class lower case as image name=$TEST_CLASS_LOWER_CASE" \
+	"-H:Class=$TEST_CLASS" \
+	"-H:Name=$TEST_CLASS_LOWER_CASE" \
 	-H:-AOTInline \
 	-H:+PrintCanonicalGraphStrings \
 	-H:+DumpGraphsForCoverage \
 	-H:PrintCanonicalGraphStringFlavor=3 \
-	$( [[ $REMOVE_IDENTITIES == true ]] && printf %s "-H:+CanonicalGraphStringsRemoveIdentities" ) \
+	$( [[ $REMOVE_IDENTITIES == false ]] && printf %s "-H:-CanonicalGraphStringsRemoveIdentities" ) \
 	$( [[ $CHECK_CONSTANTS == true ]] && printf %s "-H:+CanonicalGraphStringsCheckConstants" ) \
 	-H:DumpPath="$DUMP_DIR/$2" \
 
@@ -53,4 +53,4 @@ run_on_jar () {
 run_on_jar $RTJAR_1_PATH 1
 run_on_jar $RTJAR_2_PATH 2
 
-java DumpComparator "$DUMP_DIR/1" "$DUMP_DIR/2" "$DUMP_DIR/diff-medium.txt" medium
+java DumpComparator "$DUMP_DIR/1" "$DUMP_DIR/2" "$DUMP_DIR/diff-medium.txt" "$DUMP_DIR/potentional-diff-medium.txt" medium
